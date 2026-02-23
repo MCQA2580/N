@@ -148,16 +148,7 @@ async function handleRequest(request) {
             max-width: 90%;
             max-height: 80%;
         }
-        #downloadBtn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #1890ff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
+
     </style>
 </head>
 <body>
@@ -184,7 +175,6 @@ async function handleRequest(request) {
         <div class="modal-content">
             <span class="close">&times;</span>
             <img id="modalImage">
-            <button id="downloadBtn">下载图片</button>
         </div>
     </div>
     
@@ -200,7 +190,6 @@ async function handleRequest(request) {
         var imageModal = document.getElementById('imageModal');
         var modalImage = document.getElementById('modalImage');
         var closeModal = document.querySelector('.close');
-        var downloadBtn = document.getElementById('downloadBtn');
         
         // 初始化
         function init() {
@@ -322,6 +311,26 @@ async function handleRequest(request) {
                     img.alt = currentImage.title;
                     img.loading = 'lazy';
                     
+                    // 当图片加载完成后，更新存储的 URL 为实际的图片 URL（重定向后的 URL）
+                    img.onload = function() {
+                        // 检查图片的实际 URL 是否与存储的 URL 不同
+                        var parentItem = this.parentElement;
+                        if (parentItem) {
+                            console.log('Thumbnail onload - Current src:', this.src);
+                            console.log('Thumbnail onload - Stored URL:', parentItem.dataset.imageUrl);
+                            if (this.src !== parentItem.dataset.imageUrl) {
+                                console.log('Thumbnail redirected to:', this.src);
+                                // 更新存储的 URL 为实际的图片 URL
+                                parentItem.dataset.imageUrl = this.src;
+                                console.log('Thumbnail onload - Updated stored URL:', parentItem.dataset.imageUrl);
+                            } else {
+                                console.log('Thumbnail onload - No redirect, src matches stored URL');
+                            }
+                        } else {
+                            console.error('Thumbnail onload - No parent element found');
+                        }
+                    };
+                    
                     // 添加图片加载失败处理
                     img.onerror = function() {
                         console.error('Image load failed:', this.src);
@@ -348,10 +357,13 @@ async function handleRequest(request) {
                     
                     // 添加点击事件
                     imageItem.onclick = function() {
-                        // 使用存储的原始图片 URL
-                        var originalImageUrl = this.dataset.imageUrl;
-                        if (originalImageUrl) {
-                            openModal(originalImageUrl);
+                        // 使用缩略图当前的 src 属性，而不是存储的 URL
+                        // 这样可以确保放大时使用的是缩略图实际加载的图片 URL，而不是原始的 API URL
+                        var imgElement = this.querySelector('img');
+                        var actualImageUrl = imgElement ? imgElement.src : this.dataset.imageUrl;
+                        console.log('Image item clicked - Actual URL:', actualImageUrl);
+                        if (actualImageUrl) {
+                            openModal(actualImageUrl);
                         }
                     };
                     
@@ -365,18 +377,26 @@ async function handleRequest(request) {
         
         // 打开图片模态框
         function openModal(imageUrl) {
+            console.log('Opening modal with URL:', imageUrl);
             // 确保使用原始图片 URL
             currentImageUrl = imageUrl;
+            console.log('Set currentImageUrl to:', currentImageUrl);
             // 设置模态框图片的 src
             modalImage.src = imageUrl;
+            console.log('Set modalImage.src to:', modalImage.src);
             
             // 当图片加载完成后，获取实际的图片 URL（重定向后的 URL）
             modalImage.onload = function() {
+                console.log('Modal image onload - Current src:', this.src);
+                console.log('Modal image onload - currentImageUrl:', currentImageUrl);
                 // 检查图片的实际 URL 是否与原始 URL 不同
                 if (this.src !== currentImageUrl) {
-                    console.log('Image redirected to:', this.src);
+                    console.log('Modal image redirected to:', this.src);
                     // 更新 currentImageUrl 为实际的图片 URL
                     currentImageUrl = this.src;
+                    console.log('Updated currentImageUrl to:', currentImageUrl);
+                } else {
+                    console.log('Modal image onload - No redirect, src matches currentImageUrl');
                 }
             };
             
@@ -395,25 +415,10 @@ async function handleRequest(request) {
                 };
             };
             imageModal.style.display = 'block';
+            console.log('Modal displayed');
         }
         
-        // 下载图片
-        function downloadImage() {
-            if (!currentImageUrl) return;
-            
-            // 在新标签页中打开图片 URL，用户可以从那里保存图片
-            // 这样可以确保下载的图片与显示的图片完全一致
-            var newTab = window.open(currentImageUrl, '_blank');
-            if (newTab) {
-                newTab.focus();
-            } else {
-                // 如果弹出窗口被阻止，使用传统的下载方式
-                var link = document.createElement('a');
-                link.href = currentImageUrl;
-                link.download = 'anime_' + Date.now() + '.jpg';
-                link.click();
-            }
-        }
+
         
         // 获取分类名称
         function getCategoryName(category) {
@@ -454,8 +459,7 @@ async function handleRequest(request) {
                 }
             });
             
-            // 下载按钮点击
-            downloadBtn.addEventListener('click', downloadImage);
+
         }
         
         // 初始化应用
