@@ -189,40 +189,21 @@ async function handleRequest(request) {
     </div>
     
     <script>
-        // 添加全局错误处理
-        window.onerror = function(message, source, lineno, colno, error) {
-            console.error('Global error:', message, 'at', source, ':', lineno, ':', colno);
-            if (error) {
-                console.error('Error object:', error);
-            }
-            return true;
-        };
-        
         // 全局变量
-        let currentCategory = 'anime';
-        let imageList = [];
-        let currentImageUrl = '';
+        var currentCategory = 'anime';
+        var imageList = [];
+        var currentImageUrl = '';
         
         // DOM元素
-        const imageGrid = document.getElementById('imageGrid');
-        const categoryTags = document.querySelectorAll('.category-tag');
-        const imageModal = document.getElementById('imageModal');
-        const modalImage = document.getElementById('modalImage');
-        const closeModal = document.querySelector('.close');
-        const downloadBtn = document.getElementById('downloadBtn');
-        
-        console.log('DOM elements loaded:', {
-            imageGrid: imageGrid,
-            categoryTags: categoryTags.length,
-            imageModal: imageModal,
-            modalImage: modalImage,
-            closeModal: closeModal,
-            downloadBtn: downloadBtn
-        });
+        var imageGrid = document.getElementById('imageGrid');
+        var categoryTags = document.querySelectorAll('.category-tag');
+        var imageModal = document.getElementById('imageModal');
+        var modalImage = document.getElementById('modalImage');
+        var closeModal = document.querySelector('.close');
+        var downloadBtn = document.getElementById('downloadBtn');
         
         // 初始化
         function init() {
-            console.log('Initializing application...');
             // 加载默认图片
             loadImages();
             
@@ -232,61 +213,60 @@ async function handleRequest(request) {
         
         // 加载图片
         function loadImages() {
-            console.log('Loading images...');
             // 显示加载状态
             imageGrid.innerHTML = '<div class="loading">加载中...</div>';
             
             // 转换分类为对应API
-            const categoryToApi = {
+            var categoryToApi = {
                 anime: 'https://www.dmoe.cc/random.php'
             };
             
-            const apiUrl = categoryToApi[currentCategory] || 'https://www.dmoe.cc/random.php';
+            var apiUrl = categoryToApi[currentCategory] || 'https://www.dmoe.cc/random.php';
             console.log('Using API URL:', apiUrl);
             
             // 分批加载图片，每次加载20张
-            const batchSize = 20;
-            const totalImages = 100;
+            var batchSize = 20;
+            var totalImages = 100;
             
             // 清空图片列表
             imageList = [];
             
-            try {
-                // 开始分批加载
-                loadBatch(0, batchSize, totalImages, apiUrl);
-            } catch (error) {
-                console.error('Error in loadImages:', error);
-                imageGrid.innerHTML = '<div class="error">加载图片时发生错误</div>';
-            }
+            // 开始分批加载
+            loadBatch(0, batchSize, totalImages, apiUrl);
         }
         
         // 分批加载图片
         function loadBatch(start, batchSize, totalImages, apiUrl) {
             console.log('Loading batch:', start, 'to', Math.min(start + batchSize, totalImages));
             try {
-                const end = Math.min(start + batchSize, totalImages);
-                const imagePromises = [];
-                const imageUrls = new Set(); // 用于去重
+                var end = Math.min(start + batchSize, totalImages);
+                var imagePromises = [];
+                var imageUrls = new Set(); // 用于去重
                 
-                for (let i = start; i < end; i++) {
+                for (var i = start; i < end; i++) {
                     // 生成唯一的图片URL，使用更随机的参数
-                    const randomParam = Math.random().toString(36).substring(2, 15);
-                    const imageUrl = apiUrl + "?t=" + (Date.now() + i) + "&r=" + randomParam;
+                    var randomParam = Math.random().toString(36).substring(2, 15);
+                    var imageUrl = apiUrl + '?t=' + (Date.now() + i) + '&r=' + randomParam;
                     imageUrls.add(imageUrl);
                 }
                 
                 console.log('Generated URLs:', imageUrls.size);
                 
                 // 转换为数组并创建请求
-                Array.from(imageUrls).forEach(url => {
+                Array.from(imageUrls).forEach(function(url) {
                     // 添加超时处理
-                    const fetchWithTimeout = (url, timeout = 5000) => {
+                    var fetchWithTimeout = function(url, timeout) {
+                        timeout = timeout || 5000;
                         return Promise.race([
                             fetch(url),
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), timeout))
+                            new Promise(function(_, reject) {
+                                setTimeout(function() {
+                                    reject(new Error('Request timeout'));
+                                }, timeout);
+                            })
                         ]);
                     };
-                    imagePromises.push(fetchWithTimeout(url).catch(error => {
+                    imagePromises.push(fetchWithTimeout(url).catch(function(error) {
                         console.error('Fetch error:', error);
                         return null; // 允许个别请求失败
                     }));
@@ -295,21 +275,25 @@ async function handleRequest(request) {
                 console.log('Created fetch promises:', imagePromises.length);
                 
                 Promise.all(imagePromises)
-                    .then(responses => {
+                    .then(function(responses) {
                         console.log('Received responses:', responses.length);
                         // 过滤掉失败的响应
-                        const successfulResponses = responses.filter(response => response !== null);
+                        var successfulResponses = responses.filter(function(response) {
+                            return response !== null;
+                        });
                         console.log('Successful responses:', successfulResponses.length);
                         
                         // 转换为图片列表并添加到总列表
-                        const batchImages = [];
-                        let currentId = start + 1;
-                        const existingUrls = new Set(imageList.map(img => img.url)); // 用于快速去重
+                        var batchImages = [];
+                        var currentId = start + 1;
+                        var existingUrls = new Set(imageList.map(function(img) {
+                            return img.url;
+                        })); // 用于快速去重
                         
-                        successfulResponses.forEach((response, index) => {
+                        successfulResponses.forEach(function(response, index) {
                             // 生成唯一的图片URL，使用更随机的参数
-                            const randomParam = Math.random().toString(36).substring(2, 15);
-                            const imageUrl = apiUrl + "?t=" + (Date.now() + start + index) + "&r=" + randomParam;
+                            var randomParam = Math.random().toString(36).substring(2, 15);
+                            var imageUrl = apiUrl + '?t=' + (Date.now() + start + index) + '&r=' + randomParam;
                             
                             // 检查是否已经存在相同的URL
                             if (!existingUrls.has(imageUrl)) {
@@ -329,7 +313,7 @@ async function handleRequest(request) {
                         console.log('Created batch images:', batchImages.length);
                         
                         // 添加到总列表
-                        imageList = [...imageList, ...batchImages];
+                        imageList = imageList.concat(batchImages);
                         
                         // 渲染当前批次的图片
                         if (start === 0) {
@@ -343,14 +327,14 @@ async function handleRequest(request) {
                         // 继续加载下一批
                         if (end < totalImages) {
                             // 短暂延迟后加载下一批，避免请求过于密集
-                            setTimeout(() => {
+                            setTimeout(function() {
                                 loadBatch(end, batchSize, totalImages, apiUrl);
                             }, 500);
                         } else {
                             console.log('All batches loaded');
                         }
                     })
-                    .catch(error => {
+                    .catch(function(error) {
                         console.error('获取图片失败:', error);
                         imageGrid.innerHTML = '<div class="error">获取图片失败，请检查网络连接</div>';
                     });
@@ -368,17 +352,18 @@ async function handleRequest(request) {
                 return;
             }
             
-            images.forEach((image, index) => {
-                console.log('Rendering image', index + 1, ':', image.url);
+            for (var i = 0; i < images.length; i++) {
+                var currentImage = images[i];
+                console.log('Rendering image', i + 1, ':', currentImage.url);
                 
                 try {
-                    const imageItem = document.createElement('div');
+                    var imageItem = document.createElement('div');
                     imageItem.className = 'image-item';
                     
                     // 创建图片元素
-                    const img = document.createElement('img');
-                    img.src = image.url;
-                    img.alt = image.title;
+                    var img = document.createElement('img');
+                    img.src = currentImage.url;
+                    img.alt = currentImage.title;
                     img.loading = 'lazy';
                     
                     // 添加图片加载失败处理
@@ -397,25 +382,29 @@ async function handleRequest(request) {
                     };
                     
                     // 创建信息元素
-                    const infoDiv = document.createElement('div');
+                    var infoDiv = document.createElement('div');
                     infoDiv.className = 'image-info';
-                    infoDiv.innerHTML = "<div class=\"image-title\">" + image.title + "</div><div class=\"image-desc\">" + image.desc + "</div>";
+                    infoDiv.innerHTML = '<div class="image-title">' + currentImage.title + '</div><div class="image-desc">' + currentImage.desc + '</div>';
                     
                     // 组装图片项
                     imageItem.appendChild(img);
                     imageItem.appendChild(infoDiv);
                     
                     // 添加点击事件
-                    imageItem.addEventListener('click', () => {
-                        openModal(image.url);
-                    });
+                    imageItem.onclick = function() {
+                        // 使用 this 来获取当前元素的图片 URL
+                        var imgElement = this.querySelector('img');
+                        if (imgElement) {
+                            openModal(imgElement.src);
+                        }
+                    };
                     
                     imageGrid.appendChild(imageItem);
                     console.log('Image rendered successfully');
                 } catch (error) {
                     console.error('Error rendering image:', error);
                 }
-            });
+            }
         }
         
         // 打开图片模态框
@@ -430,7 +419,7 @@ async function handleRequest(request) {
             if (!currentImageUrl) return;
             
             // 创建一个临时链接
-            const link = document.createElement('a');
+            var link = document.createElement('a');
             link.href = currentImageUrl;
             link.download = 'anime_' + Date.now() + '.jpg';
             link.click();
@@ -438,7 +427,7 @@ async function handleRequest(request) {
         
         // 获取分类名称
         function getCategoryName(category) {
-            const categoryNames = {
+            var categoryNames = {
                 anime: '二次元动漫'
             };
             return categoryNames[category] || '二次元动漫';
@@ -447,10 +436,12 @@ async function handleRequest(request) {
         // 设置事件监听
         function setupEventListeners() {
             // 分类标签
-            categoryTags.forEach(tag => {
-                tag.addEventListener('click', () => {
+            categoryTags.forEach(function(tag) {
+                tag.addEventListener('click', function() {
                     // 更新分类状态
-                    categoryTags.forEach(t => t.classList.remove('active'));
+                    categoryTags.forEach(function(t) {
+                        t.classList.remove('active');
+                    });
                     tag.classList.add('active');
                     
                     // 更新当前分类
@@ -462,12 +453,12 @@ async function handleRequest(request) {
             });
             
             // 关闭模态框
-            closeModal.addEventListener('click', () => {
+            closeModal.addEventListener('click', function() {
                 imageModal.style.display = 'none';
             });
             
             // 点击模态框外部关闭
-            window.addEventListener('click', (e) => {
+            window.addEventListener('click', function(e) {
                 if (e.target === imageModal) {
                     imageModal.style.display = 'none';
                 }
