@@ -328,10 +328,7 @@ async function handleRequest(request) {
                 // 创建信息元素
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'image-info';
-                infoDiv.innerHTML = `
-                    <div class="image-title">${image.title}</div>
-                    <div class="image-desc">${image.desc}</div>
-                `;
+                infoDiv.innerHTML = "<div class=\"image-title\">" + image.title + "</div><div class=\"image-desc\">" + image.desc + "</div>";
                 
                 // 组装图片项
                 imageItem.appendChild(img);
