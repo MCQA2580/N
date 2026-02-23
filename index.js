@@ -224,122 +224,73 @@ async function handleRequest(request) {
             var apiUrl = categoryToApi[currentCategory] || 'https://www.dmoe.cc/random.php';
             console.log('Using API URL:', apiUrl);
             
-            // 分批加载图片，每次加载20张
+            // 生成图片，每次生成20张
             var batchSize = 20;
             var totalImages = 100;
             
             // 清空图片列表
             imageList = [];
             
-            // 开始分批加载
-            loadBatch(0, batchSize, totalImages, apiUrl);
+            // 开始生成图片
+            generateImages(0, batchSize, totalImages, apiUrl);
         }
         
-        // 分批加载图片
-        function loadBatch(start, batchSize, totalImages, apiUrl) {
-            console.log('Loading batch:', start, 'to', Math.min(start + batchSize, totalImages));
+        // 生成图片
+        function generateImages(start, batchSize, totalImages, apiUrl) {
+            console.log('Generating images:', start, 'to', Math.min(start + batchSize, totalImages));
             try {
                 var end = Math.min(start + batchSize, totalImages);
-                var imagePromises = [];
-                var imageUrls = new Set(); // 用于去重
+                var batchImages = [];
+                var currentId = start + 1;
+                var existingUrls = new Set(imageList.map(function(img) {
+                    return img.url;
+                })); // 用于快速去重
                 
                 for (var i = start; i < end; i++) {
                     // 生成唯一的图片URL，使用更随机的参数
                     var randomParam = Math.random().toString(36).substring(2, 15);
                     var imageUrl = apiUrl + '?t=' + (Date.now() + i) + '&r=' + randomParam;
-                    imageUrls.add(imageUrl);
+                    
+                    // 检查是否已经存在相同的URL
+                    if (!existingUrls.has(imageUrl)) {
+                        existingUrls.add(imageUrl);
+                        batchImages.push({
+                            id: currentId++,
+                            title: '二次元动漫图片 ' + (currentId - 1),
+                            desc: '这是一张精美的二次元动漫图片，分辨率高清，适合各种用途。',
+                            category: currentCategory,
+                            url: imageUrl,
+                            photographer: '网络摄影师',
+                            photographerUrl: '#'
+                        });
+                    }
                 }
                 
-                console.log('Generated URLs:', imageUrls.size);
+                console.log('Created batch images:', batchImages.length);
                 
-                // 转换为数组并创建请求
-                Array.from(imageUrls).forEach(function(url) {
-                    // 添加超时处理
-                    var fetchWithTimeout = function(url, timeout) {
-                        timeout = timeout || 5000;
-                        return Promise.race([
-                            fetch(url),
-                            new Promise(function(_, reject) {
-                                setTimeout(function() {
-                                    reject(new Error('Request timeout'));
-                                }, timeout);
-                            })
-                        ]);
-                    };
-                    imagePromises.push(fetchWithTimeout(url).catch(function(error) {
-                        console.error('Fetch error:', error);
-                        return null; // 允许个别请求失败
-                    }));
-                });
+                // 添加到总列表
+                imageList = imageList.concat(batchImages);
                 
-                console.log('Created fetch promises:', imagePromises.length);
+                // 渲染当前批次的图片
+                if (start === 0) {
+                    // 第一次加载，清空加载状态并开始渲染
+                    imageGrid.innerHTML = '';
+                }
                 
-                Promise.all(imagePromises)
-                    .then(function(responses) {
-                        console.log('Received responses:', responses.length);
-                        // 过滤掉失败的响应
-                        var successfulResponses = responses.filter(function(response) {
-                            return response !== null;
-                        });
-                        console.log('Successful responses:', successfulResponses.length);
-                        
-                        // 转换为图片列表并添加到总列表
-                        var batchImages = [];
-                        var currentId = start + 1;
-                        var existingUrls = new Set(imageList.map(function(img) {
-                            return img.url;
-                        })); // 用于快速去重
-                        
-                        successfulResponses.forEach(function(response, index) {
-                            // 生成唯一的图片URL，使用更随机的参数
-                            var randomParam = Math.random().toString(36).substring(2, 15);
-                            var imageUrl = apiUrl + '?t=' + (Date.now() + start + index) + '&r=' + randomParam;
-                            
-                            // 检查是否已经存在相同的URL
-                            if (!existingUrls.has(imageUrl)) {
-                                existingUrls.add(imageUrl);
-                                batchImages.push({
-                                    id: currentId++,
-                                    title: '二次元动漫图片 ' + (currentId - 1),
-                                    desc: '这是一张精美的二次元动漫图片，分辨率高清，适合各种用途。',
-                                    category: currentCategory,
-                                    url: imageUrl,
-                                    photographer: '网络摄影师',
-                                    photographerUrl: '#'
-                                });
-                            }
-                        });
-                        
-                        console.log('Created batch images:', batchImages.length);
-                        
-                        // 添加到总列表
-                        imageList = imageList.concat(batchImages);
-                        
-                        // 渲染当前批次的图片
-                        if (start === 0) {
-                            // 第一次加载，清空加载状态并开始渲染
-                            imageGrid.innerHTML = '';
-                        }
-                        
-                        // 渲染当前批次的图片
-                        renderBatch(batchImages);
-                        
-                        // 继续加载下一批
-                        if (end < totalImages) {
-                            // 短暂延迟后加载下一批，避免请求过于密集
-                            setTimeout(function() {
-                                loadBatch(end, batchSize, totalImages, apiUrl);
-                            }, 500);
-                        } else {
-                            console.log('All batches loaded');
-                        }
-                    })
-                    .catch(function(error) {
-                        console.error('获取图片失败:', error);
-                        imageGrid.innerHTML = '<div class="error">获取图片失败，请检查网络连接</div>';
-                    });
+                // 渲染当前批次的图片
+                renderBatch(batchImages);
+                
+                // 继续生成下一批
+                if (end < totalImages) {
+                    // 短暂延迟后生成下一批，避免请求过于密集
+                    setTimeout(function() {
+                        generateImages(end, batchSize, totalImages, apiUrl);
+                    }, 500);
+                } else {
+                    console.log('All images generated');
+                }
             } catch (error) {
-                console.error('Error in loadBatch:', error);
+                console.error('Error in generateImages:', error);
                 imageGrid.innerHTML = '<div class="error">加载过程中发生错误</div>';
             }
         }
