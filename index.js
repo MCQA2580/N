@@ -238,10 +238,10 @@ async function handleRequest(request) {
             
             // 转换分类为对应API
             const categoryToApi = {
-                anime: 'https://api.mtyqx.cn/api/random.php'
+                anime: 'https://www.dmoe.cc/random.php'
             };
             
-            const apiUrl = categoryToApi[currentCategory] || 'https://api.mtyqx.cn/api/random.php';
+            const apiUrl = categoryToApi[currentCategory] || 'https://www.dmoe.cc/random.php';
             console.log('Using API URL:', apiUrl);
             
             // 分批加载图片，每次加载20张
