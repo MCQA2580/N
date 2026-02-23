@@ -222,6 +222,7 @@ async function handleRequest(request) {
             };
             
             const apiUrl = categoryToApi[currentCategory] || 'https://api.mtyqx.cn/api/random.php';
+            console.log('Using API URL:', apiUrl);
             
             // 分批加载图片，每次加载20张
             const batchSize = 20;
@@ -249,17 +250,31 @@ async function handleRequest(request) {
             
             // 转换为数组并创建请求
             Array.from(imageUrls).forEach(url => {
-                imagePromises.push(fetch(url));
+                // 添加超时处理
+                const fetchWithTimeout = (url, timeout = 5000) => {
+                    return Promise.race([
+                        fetch(url),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), timeout))
+                    ]);
+                };
+                imagePromises.push(fetchWithTimeout(url).catch(error => {
+                    console.error('Fetch error:', error);
+                    return null; // 允许个别请求失败
+                }));
             });
             
             Promise.all(imagePromises)
                 .then(responses => {
+                    // 过滤掉失败的响应
+                    const successfulResponses = responses.filter(response => response !== null);
+                    console.log('Successful responses:', successfulResponses.length);
+                    
                     // 转换为图片列表并添加到总列表
                     const batchImages = [];
                     let currentId = start + 1;
                     const existingUrls = new Set(imageList.map(img => img.url)); // 用于快速去重
                     
-                    responses.forEach((response, index) => {
+                    successfulResponses.forEach((response, index) => {
                         // 生成唯一的图片URL，使用更随机的参数
                         const randomParam = Math.random().toString(36).substring(2, 15);
                         const imageUrl = apiUrl + "?t=" + (Date.now() + start + index) + "&r=" + randomParam;
@@ -319,10 +334,17 @@ async function handleRequest(request) {
                 
                 // 添加图片加载失败处理
                 img.onerror = function() {
+                    console.error('Image load failed:', this.src);
                     // 加载失败时使用占位符图片
                     this.src = 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=二次元动漫%20占位符&image_size=landscape_16_9';
+                    console.log('Using placeholder image:', this.src);
                     // 添加重试机制
-                    this.onerror = null; // 防止无限重试
+                    this.onerror = function() {
+                        console.error('Placeholder image also failed');
+                        // 显示错误信息
+                        this.alt = '图片加载失败';
+                        this.onerror = null; // 防止无限重试
+                    };
                 };
                 
                 // 创建信息元素
