@@ -307,7 +307,6 @@ async function handleRequest(request) {
                     
                     // 创建图片元素
                     var img = document.createElement('img');
-                    img.src = currentImage.url;
                     img.alt = currentImage.title;
                     img.loading = 'lazy';
                     
@@ -346,6 +345,9 @@ async function handleRequest(request) {
                         };
                     };
                     
+                    // 最后设置图片的 src
+                    img.src = currentImage.url;
+                    
                     // 创建信息元素
                     var infoDiv = document.createElement('div');
                     infoDiv.className = 'image-info';
@@ -381,11 +383,8 @@ async function handleRequest(request) {
             // 确保使用原始图片 URL
             currentImageUrl = imageUrl;
             console.log('Set currentImageUrl to:', currentImageUrl);
-            // 设置模态框图片的 src
-            modalImage.src = imageUrl;
-            console.log('Set modalImage.src to:', modalImage.src);
             
-            // 当图片加载完成后，获取实际的图片 URL（重定向后的 URL）
+            // 先设置 onload 事件处理函数
             modalImage.onload = function() {
                 console.log('Modal image onload - Current src:', this.src);
                 console.log('Modal image onload - currentImageUrl:', currentImageUrl);
@@ -414,6 +413,11 @@ async function handleRequest(request) {
                     this.onerror = null; // 防止无限重试
                 };
             };
+            
+            // 然后设置模态框图片的 src
+            modalImage.src = imageUrl;
+            console.log('Set modalImage.src to:', modalImage.src);
+            
             imageModal.style.display = 'block';
             console.log('Modal displayed');
         }
