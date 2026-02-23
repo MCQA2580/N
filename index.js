@@ -243,7 +243,7 @@ async function handleRequest(request) {
             for (let i = start; i < end; i++) {
                 // 生成唯一的图片URL，使用更随机的参数
                 const randomParam = Math.random().toString(36).substring(2, 15);
-                const imageUrl = `${apiUrl}?t=${Date.now() + i}&r=${randomParam}`;
+                const imageUrl = apiUrl + "?t=" + (Date.now() + i) + "&r=" + randomParam;
                 imageUrls.add(imageUrl);
             }
             
@@ -262,7 +262,7 @@ async function handleRequest(request) {
                     responses.forEach((response, index) => {
                         // 生成唯一的图片URL，使用更随机的参数
                         const randomParam = Math.random().toString(36).substring(2, 15);
-                        const imageUrl = `${apiUrl}?t=${Date.now() + start + index}&r=${randomParam}`;
+                        const imageUrl = apiUrl + "?t=" + (Date.now() + start + index) + "&r=" + randomParam;
                         
                         // 检查是否已经存在相同的URL
                         if (!existingUrls.has(imageUrl)) {
