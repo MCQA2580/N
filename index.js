@@ -218,10 +218,10 @@ async function handleRequest(request) {
             
             // 转换分类为对应API
             var categoryToApi = {
-                anime: 'https://www.dmoe.cc/random.php'
+                anime: 'https://api.mtyqx.cn/api/random.php'
             };
             
-            var apiUrl = categoryToApi[currentCategory] || 'https://www.dmoe.cc/random.php';
+            var apiUrl = categoryToApi[currentCategory] || 'https://api.mtyqx.cn/api/random.php';
             console.log('Using API URL:', apiUrl);
             
             // 生成图片，每次生成20张
@@ -247,9 +247,11 @@ async function handleRequest(request) {
                 })); // 用于快速去重
                 
                 for (var i = start; i < end; i++) {
-                    // 生成唯一的图片URL，使用更随机的参数
-                    var randomParam = Math.random().toString(36).substring(2, 15);
-                    var imageUrl = apiUrl + '?t=' + (Date.now() + i) + '&r=' + randomParam;
+                    // 生成唯一的图片URL，使用更多随机参数
+                    var randomParam1 = Math.random().toString(36).substring(2, 15);
+                    var randomParam2 = Math.random().toString(36).substring(2, 15);
+                    var timestamp = Date.now() + i;
+                    var imageUrl = apiUrl + '?t=' + timestamp + '&r=' + randomParam1 + '&s=' + randomParam2;
                     
                     // 检查是否已经存在相同的URL
                     if (!existingUrls.has(imageUrl)) {
@@ -363,8 +365,35 @@ async function handleRequest(request) {
         
         // 打开图片模态框
         function openModal(imageUrl) {
+            // 确保使用原始图片 URL
             currentImageUrl = imageUrl;
+            // 设置模态框图片的 src
             modalImage.src = imageUrl;
+            
+            // 当图片加载完成后，获取实际的图片 URL（重定向后的 URL）
+            modalImage.onload = function() {
+                // 检查图片的实际 URL 是否与原始 URL 不同
+                if (this.src !== currentImageUrl) {
+                    console.log('Image redirected to:', this.src);
+                    // 更新 currentImageUrl 为实际的图片 URL
+                    currentImageUrl = this.src;
+                }
+            };
+            
+            // 防止模态框图片加载失败时修改 currentImageUrl
+            modalImage.onerror = function() {
+                console.error('Modal image load failed:', this.src);
+                // 加载失败时使用占位符图片，但不修改 currentImageUrl
+                this.src = 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=二次元动漫%20占位符&image_size=landscape_16_9';
+                console.log('Using placeholder image:', this.src);
+                // 添加重试机制
+                this.onerror = function() {
+                    console.error('Placeholder image also failed');
+                    // 显示错误信息
+                    this.alt = '图片加载失败';
+                    this.onerror = null; // 防止无限重试
+                };
+            };
             imageModal.style.display = 'block';
         }
         
@@ -372,11 +401,18 @@ async function handleRequest(request) {
         function downloadImage() {
             if (!currentImageUrl) return;
             
-            // 创建一个临时链接
-            var link = document.createElement('a');
-            link.href = currentImageUrl;
-            link.download = 'anime_' + Date.now() + '.jpg';
-            link.click();
+            // 在新标签页中打开图片 URL，用户可以从那里保存图片
+            // 这样可以确保下载的图片与显示的图片完全一致
+            var newTab = window.open(currentImageUrl, '_blank');
+            if (newTab) {
+                newTab.focus();
+            } else {
+                // 如果弹出窗口被阻止，使用传统的下载方式
+                var link = document.createElement('a');
+                link.href = currentImageUrl;
+                link.download = 'anime_' + Date.now() + '.jpg';
+                link.click();
+            }
         }
         
         // 获取分类名称
