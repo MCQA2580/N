@@ -311,6 +311,9 @@ async function handleRequest(request) {
                     var imageItem = document.createElement('div');
                     imageItem.className = 'image-item';
                     
+                    // 存储原始图片 URL
+                    imageItem.dataset.imageUrl = currentImage.url;
+                    
                     // 创建图片元素
                     var img = document.createElement('img');
                     img.src = currentImage.url;
@@ -343,10 +346,10 @@ async function handleRequest(request) {
                     
                     // 添加点击事件
                     imageItem.onclick = function() {
-                        // 使用 this 来获取当前元素的图片 URL
-                        var imgElement = this.querySelector('img');
-                        if (imgElement) {
-                            openModal(imgElement.src);
+                        // 使用存储的原始图片 URL
+                        var originalImageUrl = this.dataset.imageUrl;
+                        if (originalImageUrl) {
+                            openModal(originalImageUrl);
                         }
                     };
                     
