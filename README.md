@@ -11,6 +11,26 @@
 - **图片放大**：点击图片可全屏查看大图
 - **图片下载**：支持下载当前查看的图片
 
+## 示例
+
+### 网站首页
+
+网站首页会显示100张二次元动漫图片，以网格布局展示：
+
+![网站首页示例](https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=二次元动漫图片网站首页%20网格布局&image_size=landscape_16_9)
+
+### 图片放大查看
+
+点击任意图片会打开全屏模态框，显示大图并提供下载按钮：
+
+![图片放大示例](https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=二次元动漫图片全屏查看模态框&image_size=landscape_16_9)
+
+### 图片下载
+
+在模态框中点击"下载图片"按钮，即可下载当前查看的图片：
+
+![图片下载示例](https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=图片下载按钮%20点击界面&image_size=landscape_16_9)
+
 ## 使用方法
 
 1. 直接在浏览器中打开 `index.html` 文件
